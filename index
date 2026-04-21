@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yhdistetty palvelutarpeen arvio – navigoiva ja fraasipohjainen versio</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: #eef2f6;
+      color: #1f2937;
+      font-family: Arial, sans-serif;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .sidebar {
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .panel {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e5eaf0;
+    }
+    .panel h2 {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      color: #003366;
+    }
+    .main {
+      min-width: 0;
+    }
+    .hero {
+      background: linear-gradient(135deg, #003366, #1d5a96);
+      color: #ffffff;
+      border-radius: 16px;
+      padding: 20px 22px;
+      box-shadow: 0 8px 24px rgba(0, 51, 102, 0.18);
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      margin: 0 0 10px 0;
+      font-size: 30px;
+    }
+    .hero p {
+      margin: 0;
+      line-height: 1.5;
+      max-width: 1000px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid #d5dde7;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+      font-size: 14px;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #ffffff;
+      background: #003366;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+    }
+    button:hover { opacity: 0.94; }
+    button.secondary { background: #5c6770; }
+    button.success { background: #2e7d32; }
+    button.warning { background: #8d6e63; }
+    button.light { background: #1d5a96; }
+    .helper {
+      background: #ffffff;
+      border: 1px solid #e5eaf0;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+      line-height: 1.5;
+    }
+    .helper strong { color: #003366; }
+    .topics {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    details.topic {
+      background: #ffffff;
+      border: 1px solid #e5eaf0;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+    details.topic summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 18px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #003366;
+      background: #ffffff;
+      border-bottom: 1px solid transparent;
+    }
+    details.topic[open] summary {
+      border-bottom-color: #e8eef5;
+      background: #fbfdff;
+    }
+    details.topic summary::-webkit-details-marker { display: none; }
+    .chevron {
+      display: inline-block;
+      width: 18px;
+      transition: transform 0.2s ease;
+      color: #1d5a96;
+      flex: 0 0 auto;
+    }
+    details.topic[open] .chevron { transform: rotate(90deg); }
+    .topic-body {
+      padding: 16px 18px 18px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field.full {
+      grid-column: 1 / -1;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #243b53;
+    }
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #bcc7d1;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #fff;
+      color: #102a43;
+    }
+    input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+    .subsection {
+      margin-top: 10px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e6edf5;
+      border-radius: 12px;
+    }
+    .subsection h3 {
+      margin: 0 0 8px 0;
+      color: #003366;
+      font-size: 16px;
+    }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .checkbox-group label {
+      margin-bottom: 0;
+      font-weight: normal;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .muted {
+      color: #52606d;
+      font-size: 0.95em;
+      line-height: 1.5;
+    }
+    .active-field {
+      margin-top: 10px;
+      font-size: 0.94em;
+      color: #1d5a96;
+      font-weight: bold;
+    }
+    .toc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .toc-link {
+      display: block;
+      padding: 9px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #243b53;
+      font-size: 14px;
+      border: 1px solid transparent;
+    }
+    .toc-link:hover,
+    .toc-link.active {
+      background: #eef6ff;
+      border-color: #c9ddf6;
+      color: #003366;
+    }
+    .phrase-select {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .phrase-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .phrase-buttons button {
+      text-align: left;
+      background: #f4f8fc;
+      color: #16324f;
+      border: 1px solid #d5dde7;
+      box-shadow: none;
+      font-size: 13px;
+    }
+    .phrase-buttons button:hover {
+      background: #e9f2fb;
+      opacity: 1;
+    }
+    .document-card {
+      margin-top: 18px;
+      background: #ffffff;
+      border: 1px solid #e5eaf0;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+    }
+    .document-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .document-page {
+      width: 210mm;
+      max-width: 100%;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 20mm 18mm;
+      background: #ffffff;
+      color: #222222;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      border: 1px solid #e6e6e6;
+    }
+    .document-page h1 {
+      margin: 0 0 14pt 0;
+      font-size: 18pt;
+      text-align: center;
+      font-weight: bold;
+    }
+    .document-page h2 {
+      margin: 18pt 0 8pt 0;
+      font-size: 13pt;
+      color: #000000;
+    }
+    .document-page p {
+      margin: 0 0 7pt 0;
+      white-space: pre-wrap;
+    }
+    .document-page .placeholder {
+      color: #7b8794;
+      font-style: italic;
+    }
+    .output-box {
+      width: 100%;
+      min-height: 300px;
+      white-space: pre-wrap;
+      font-family: Arial, sans-serif;
+      margin-top: 10px;
+    }
+    .hidden-section {
+      display: none !important;
+    }
+    .screen-only { display: block; }
+    .mobile-only { display: none; }
+    @media (max-width: 1100px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        max-height: none;
+      }
+      .mobile-only { display: block; }
+    }
+    @media (max-width: 760px) {
+      .grid, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+      .hero h1 {
+        font-size: 24px;
+      }
+      details.topic summary {
+        font-size: 17px;
+      }
+    }
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+      }
+      .screen-only,
+      .sidebar,
+      .hero,
+      .toolbar,
+      .helper,
+      .topics,
+      .output-card {
+        display: none !important;
+      }
+      .app {
+        display: block;
+        max-width: none;
+        padding: 0;
+        margin: 0;
+      }
+      .main {
+        margin: 0;
+        padding: 0;
+      }
+      .document-card {
+        box-shadow: none;
+        border: 0;
+        margin: 0;
+        padding: 0;
+      }
+      .document-page {
+        width: auto;
+        max-width: none;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border: 0;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12pt;
+        line-height: 1.5;
+      }
+      @page {
+        size: A4;
+        margin: 20mm 18mm;
+      }
+    }
+    
+    /* Info-napit ja muokkausmodaali */
+    .info-trigger { background: #f0f4f8; color: #003366; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; border: 1px solid #003366; cursor: help; margin-left: 10px; font-weight: normal; }
+    .info-trigger:hover { background: #003366; color: white; }
+    .info-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+    .info-modal-content { background: #fff; width: 90%; max-width: 600px; padding: 25px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .edit-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 18px; color: #5c6770; border: none; background: none; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar screen-only">
+      <section class="panel">
+        <h2>Siirry kohtaan</h2>
+        <div id="tocNav" class="toc-list">
+          <a class="toc-link" data-toc="section1" href="#section1" onclick="openSection('section1'); return false;">1. Asian vireilletuloa koskevat tiedot</a>
+          <a class="toc-link" data-toc="section2" href="#section2" onclick="openSection('section2'); return false;">2. Palvelutarpeen arviointia koskevat tiedot</a>
+          <a class="toc-link" data-toc="section3" href="#section3" onclick="openSection('section3'); return false;">3. Asiakkaan ja läheisten näkemys</a>
+          <a class="toc-link" data-toc="section4" href="#section4" onclick="openSection('section4'); return false;">4. Ammattilaisen arvio tilanteesta</a>
+          <a class="toc-link" data-toc="section5" href="#section5" onclick="openSection('section5'); return false;">5. Aikaisemmat ja nykyiset palvelut</a>
+          <a class="toc-link" data-toc="section6" href="#section6" onclick="openSection('section6'); return false;">6. Aikaisemmat toimenpiteet ja vaikuttavuus</a>
+          <a class="toc-link" data-toc="section7" href="#section7" onclick="openSection('section7'); return false;">7. Asiakkaan omat toimet</a>
+          <a class="toc-link" data-toc="section8" href="#section8" onclick="openSection('section8'); return false;">8. Työelämä</a>
+          <a class="toc-link" data-toc="section9" href="#section9" onclick="openSection('section9'); return false;">9. Koulutus ja osaaminen</a>
+          <a class="toc-link" data-toc="section10" href="#section10" onclick="openSection('section10'); return false;">10. Taloudellinen tilanne</a>
+          <a class="toc-link" data-toc="section11" href="#section11" onclick="openSection('section11'); return false;">11. Asuminen</a>
+          <a class="toc-link" data-toc="section12" href="#section12" onclick="openSection('section12'); return false;">12. Terveydentila ja toimintakyky</a>
+          <a class="toc-link" data-toc="section13" href="#section13" onclick="openSection('section13'); return false;">13. Päihteiden käyttö ja riippuvuudet</a>
+          <a class="toc-link" data-toc="section14" href="#section14" onclick="openSection('section14'); return false;">14. Sosiaaliset suhteet ja läheisverkosto</a>
+          <a class="toc-link" data-toc="section15" href="#section15" onclick="openSection('section15'); return false;">15. Elämänhallinta</a>
+          <a class="toc-link" data-toc="section16" href="#section16" onclick="openSection('section16'); return false;">16. Kuntoutustarve</a>
+          <a class="toc-link" data-toc="section17" href="#section17" onclick="openSection('section17'); return false;">17. Maahanmuutto ja kotoutuminen</a>
+          <a class="toc-link" data-toc="section18" href="#section18" onclick="openSection('section18'); return false;">18. Monialainen palvelutarpeen arvio (TYM)</a>
+          <a class="toc-link" data-toc="section19" href="#section19" onclick="openSection('section19'); return false;">19. Tuen tarpeen luonne</a>
+          <a class="toc-link" data-toc="section20" href="#section20" onclick="openSection('section20'); return false;">20. Johtopäätökset ja jatkotoimet</a>
+          <a class="toc-link" data-toc="section21" href="#section21" onclick="openSection('section21'); return false;">21. Asiakkuuden jatko ja omatyöntekijä</a>
+          <a class="toc-link" data-toc="section22" href="#section22" onclick="openSection('section22'); return false;">22. Päivämäärä ja laatija</a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Fraasipohjat</h2>
+        <p class="muted">Klikkaa ensin kenttää, johon haluat lisätä fraasin. Valitse sen jälkeen kategoria ja sopiva fraasipohja.</p>
+        <select id="phraseCategory" class="phrase-select" onchange="renderPhraseButtons()">
+          <option value="tyottomyys">Työttömyys</option>
+          <option value="terveys">Terveys</option>
+          <option value="kuntoutustarve">Kuntoutustarve</option>
+          <option value="talous">Taloudellinen tilanne</option>
+          <option value="asuminen">Asuminen</option>
+        </select>
+        <div id="phraseButtons" class="phrase-buttons"></div>
+        <div class="active-field">Aktiivinen kenttä: <span id="activeFieldName">ei valittuna</span></div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <header class="hero">
+        <h1>Työikäisten palvelutarpeen arvio / Monialainen palvelutarpeen arvio</h1>
+        <p>
+          Tämä versio sisältää valmiit fraasipohjat, klikattavat auki/kiinni-aiheet, sivun vasemman reunan sisällysluettelon, “näytä vain täytetyt kohdat” -tilan sekä Word-tyylisen asiakirjaesikatselun ja tulostuksen.
+        </p>
+      </header>
+
+      <div class="toolbar screen-only">
+        <label class="chip">
+          <input type="checkbox" id="tymToggle" onchange="toggleTYM(); updateFilledView();" />
+          Kyseessä on monialainen palvelutarpeen arvio (TYM)
+        </label>
+        <label class="chip">
+          <input type="checkbox" id="filledOnlyToggle" onchange="updateFilledView();" />
+          Näytä vain täytetyt kohdat
+        </label>
+        <button type="button" class="light" onclick="generateOutput()">Päivitä valmis asiakirjateksti</button>
+        <button type="button" class="success" onclick="copyFinalText()">Kopioi vain valmis asiakirjateksti</button>
+        <button type="button" onclick="openAllSections()">Avaa kaikki aiheet</button>
+        <button type="button" class="secondary" onclick="closeAllSections()">Sulje kaikki aiheet</button>
+        <button type="button" class="secondary" onclick="clearForm()">Tyhjennä lomake</button>
+        <button type="button" class="warning" onclick="printDocument()">Tulosta Word-näkymä</button>
+      </div>
+
+      <section class="helper screen-only">
+        <strong>Käyttövinkki:</strong> voit kirjata suppeasti avaamalla vain tarvittavat aiheet tai siirtyä nopeasti oikeaan kohtaan vasemman reunan sisällysluettelosta. Fraasipohjat toimivat siihen kenttään, jossa kursori on viimeksi ollut.
+      </section>
+
+      <form id="ptaForm">
+        <div class="topics">
+          <details id="section1" class="topic" open>
+            <summary><span class="chevron">▶</span><span>1. Asian vireilletuloa koskevat tiedot</span> <span id="trigger-section1" class="info-trigger" onclick="event.preventDefault(); showInfo('section1', '1. Asian vireilletuloa koskevat tiedot')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="vireilletulonTapa">Vireilletulon tapa</label>
+                  <select id="vireilletulonTapa">
+                    <option value=""></option>
+                    <option>Hakemus</option>
+                    <option>Yhteydenotto</option>
+                    <option>Ilmoitus sosiaalihuollon tarpeesta</option>
+                    <option>Viranomaisohjaus</option>
+                    <option>Muu</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="vireilletuloPvm">Vireilletulopäivä</label>
+                  <input type="date" id="vireilletuloPvm" />
+                </div>
+                <div class="field full">
+                  <label for="vireilletulonSyy">Vireilletulon syy / syyt</label>
+                  <textarea id="vireilletulonSyy"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="yhteydenottaja">Yhteydenottaja / ilmoittaja</label>
+                  <textarea id="yhteydenottaja"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section2" class="topic" open>
+            <summary><span class="chevron">▶</span><span>2. Palvelutarpeen arviointia koskevat tiedot</span> <span id="trigger-section2" class="info-trigger" onclick="event.preventDefault(); showInfo('section2', '2. Palvelutarpeen arviointia koskevat tiedot')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="aloitusPvm">Arvioinnin aloittamispäivä</label>
+                  <input type="date" id="aloitusPvm" />
+                </div>
+                <div class="field">
+                  <label for="arvioinninTapa">Arvioinnin toteutustapa</label>
+                  <select id="arvioinninTapa">
+                    <option value=""></option>
+                    <option>Vastaanotolla</option>
+                    <option>Kotikäynti</option>
+                    <option>Puhelimitse</option>
+                    <option>Videotapaaminen</option>
+                    <option>Verkostotapaaminen</option>
+                    <option>Muu</option>
+                  </select>
+                </div>
+                <div class="field full">
+                  <label for="arvioinninToteutus">Kuvaus arvioinnin toteuttamisesta</label>
+                  <textarea id="arvioinninToteutus"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="osallistujat">Arviointiin osallistuneet henkilöt ja tahot</label>
+                  <textarea id="osallistujat"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="asiakirjat">Arvioinnissa hyödynnetyt asiakirjat / selvitykset</label>
+                  <textarea id="asiakirjat"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section3" class="topic" open>
+            <summary><span class="chevron">▶</span><span>3. Asiakkaan ja läheisten näkemys</span> <span id="trigger-section3" class="info-trigger" onclick="event.preventDefault(); showInfo('section3', '3. Asiakkaan ja läheisten näkemys')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="field">
+                <label for="asiakkaanNakemys">Asiakkaan oma arvio tilanteestaan ja tuen tarpeestaan</label>
+                <textarea id="asiakkaanNakemys"></textarea>
+              </div>
+              <div class="field">
+                <label for="asiakkaanTavoitteet">Asiakkaan omat tavoitteet</label>
+                <textarea id="asiakkaanTavoitteet"></textarea>
+              </div>
+              <div class="field">
+                <label for="laheistenNakemys">Läheisten näkemys (tarvittaessa)</label>
+                <textarea id="laheistenNakemys"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section4" class="topic" open>
+            <summary><span class="chevron">▶</span><span>4. Ammattilaisen arvio tilanteesta</span> <span id="trigger-section4" class="info-trigger" onclick="event.preventDefault(); showInfo('section4', '4. Ammattilaisen arvio tilanteesta')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="field">
+                <label for="kokonaisTilanne">Ammattilaisen kokonaisarvio tilanteesta</label>
+                <textarea id="kokonaisTilanne"></textarea>
+              </div>
+              <div class="grid">
+                <div class="field">
+                  <label for="haasteet">Keskeiset haasteet</label>
+                  <textarea id="haasteet"></textarea>
+                </div>
+                <div class="field">
+                  <label for="voimavarat">Keskeiset voimavarat</label>
+                  <textarea id="voimavarat"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section5" class="topic" open>
+            <summary><span class="chevron">▶</span><span>5. Aikaisemmat ja nykyiset palvelut</span> <span id="trigger-section5" class="info-trigger" onclick="event.preventDefault(); showInfo('section5', '5. Aikaisemmat ja nykyiset palvelut')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Sosiaalipalvelut</h3>
+                <textarea id="palvelutSosiaali"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Terveyspalvelut</h3>
+                <textarea id="palvelutTerveys"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Työllisyys- / TE-palvelut</h3>
+                <textarea id="palvelutTe"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Muut palvelut ja verkostot</h3>
+                <textarea id="palvelutMuut"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section6" class="topic" open>
+            <summary><span class="chevron">▶</span><span>6. Aikaisemmat toimenpiteet ja niiden vaikuttavuus</span> <span id="trigger-section6" class="info-trigger" onclick="event.preventDefault(); showInfo('section6', '6. Aikaisemmat toimenpiteet ja niiden vaikuttavuus')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Mitä toimenpiteitä on tehty</h3>
+                <textarea id="toimenpiteetTehty"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Arvio vaikuttavuudesta</h3>
+                <textarea id="toimenpiteetVaikutus"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Mikä on auttanut / mikä ei ole auttanut</h3>
+                <textarea id="toimenpiteetOpit"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section7" class="topic" open>
+            <summary><span class="chevron">▶</span><span>7. Asiakkaan omat toimet tuen tarpeen ratkaisemiseksi</span> <span id="trigger-section7" class="info-trigger" onclick="event.preventDefault(); showInfo('section7', '7. Asiakkaan omat toimet tuen tarpeen ratkaisemiseksi')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Mitä asiakas on itse tehnyt</h3>
+                <textarea id="omatToimet"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Mikä on onnistunut</h3>
+                <textarea id="omatToimetOnnistunut"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Millaista lisätukea asiakas tarvitsee</h3>
+                <textarea id="omatToimetTuki"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section8" class="topic" open>
+            <summary><span class="chevron">▶</span><span>8. Työelämä</span> <span id="trigger-section8" class="info-trigger" onclick="event.preventDefault(); showInfo('section8', '8. Työelämä')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="tyotilanne">Nykyinen työtilanne</label>
+                  <select id="tyotilanne">
+                    <option value=""></option>
+                    <option>Työtön työnhakija</option>
+                    <option>Pitkäaikaistyötön</option>
+                    <option>Työssä</option>
+                    <option>Osa-aikatyössä</option>
+                    <option>Sairauslomalla</option>
+                    <option>Kuntouttavassa työtoiminnassa</option>
+                    <option>Opiskelija</option>
+                    <option>Muu</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="tyottomyydenKesto">Työttömyyden kesto / työmarkkina-asema</label>
+                  <input type="text" id="tyottomyydenKesto" />
+                </div>
+                <div class="field full">
+                  <label for="tyohistoria">Työhistoria</label>
+                  <textarea id="tyohistoria"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="tyokyky">Työkyky / työ- ja toimintakyky suhteessa työhön</label>
+                  <textarea id="tyokyky"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="tyollistymisenEsteet">Työllistymisen esteet ja mahdollisuudet</label>
+                  <textarea id="tyollistymisenEsteet"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section9" class="topic" open>
+            <summary><span class="chevron">▶</span><span>9. Koulutus ja osaaminen</span> <span id="trigger-section9" class="info-trigger" onclick="event.preventDefault(); showInfo('section9', '9. Koulutus ja osaaminen')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="korkeinKoulutus">Korkein koulutus</label>
+                  <input type="text" id="korkeinKoulutus" />
+                </div>
+                <div class="field">
+                  <label for="ammattiala">Ammatillinen osaaminen / vahvuudet</label>
+                  <input type="text" id="ammattiala" />
+                </div>
+                <div class="field full">
+                  <label for="opinnot">Käynnissä olevat tai keskeytyneet opinnot</label>
+                  <textarea id="opinnot"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="koulutusTarve">Lisä- / täydennyskoulutuksen tarve</label>
+                  <textarea id="koulutusTarve"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section10" class="topic" open>
+            <summary><span class="chevron">▶</span><span>10. Taloudellinen tilanne</span> <span id="trigger-section10" class="info-trigger" onclick="event.preventDefault(); showInfo('section10', '10. Taloudellinen tilanne')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="tulot">Tulot ja etuudet</label>
+                  <input type="text" id="tulot" />
+                </div>
+                <div class="field">
+                  <label for="menotVelat">Menot / velat</label>
+                  <input type="text" id="menotVelat" />
+                </div>
+                <div class="field full">
+                  <label for="talousHaasteet">Taloudelliset haasteet</label>
+                  <textarea id="talousHaasteet"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="talousHallinta">Talousasioiden hoito / edunvalvonnan tarve</label>
+                  <textarea id="talousHallinta"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section11" class="topic" open>
+            <summary><span class="chevron">▶</span><span>11. Asuminen</span> <span id="trigger-section11" class="info-trigger" onclick="event.preventDefault(); showInfo('section11', '11. Asuminen')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="asumismuoto">Asumismuoto</label>
+                  <input type="text" id="asumismuoto" />
+                </div>
+                <div class="field">
+                  <label for="asumisenTurvallisuus">Asumisen pysyvyys / turvallisuus</label>
+                  <input type="text" id="asumisenTurvallisuus" />
+                </div>
+                <div class="field full">
+                  <label for="asumisenTuki">Asumisen tuen tarve</label>
+                  <textarea id="asumisenTuki"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="asumisenRiskit">Asumiseen liittyvät riskit / haasteet</label>
+                  <textarea id="asumisenRiskit"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section12" class="topic" open>
+            <summary><span class="chevron">▶</span><span>12. Terveydentila ja toimintakyky</span> <span id="trigger-section12" class="info-trigger" onclick="event.preventDefault(); showInfo('section12', '12. Terveydentila ja toimintakyky')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Fyysinen terveydentila</h3>
+                <textarea id="fyysinenTerveys"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Psyykkinen vointi</h3>
+                <textarea id="psyykkinenVointi"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Diagnoosit, lääkitys ja hoitokontaktit</h3>
+                <textarea id="diagnoositLaakitys"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Toimintakyky arjessa</h3>
+                <textarea id="toimintakykyArki"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section13" class="topic" open>
+            <summary><span class="chevron">▶</span><span>13. Päihteiden käyttö ja riippuvuudet</span> <span id="trigger-section13" class="info-trigger" onclick="event.preventDefault(); showInfo('section13', '13. Päihteiden käyttö ja riippuvuudet')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Päihteiden käyttö</h3>
+                <textarea id="paihteidenKaytto"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Riippuvuudet</h3>
+                <textarea id="riippuvuudet"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Vaikutus arkeen, terveyteen ja työkykyyn</h3>
+                <textarea id="paihteetVaikutus"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Hoidon / tuen tarve</h3>
+                <textarea id="paihteetTuki"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section14" class="topic" open>
+            <summary><span class="chevron">▶</span><span>14. Sosiaaliset suhteet ja läheisverkosto</span> <span id="trigger-section14" class="info-trigger" onclick="event.preventDefault(); showInfo('section14', '14. Sosiaaliset suhteet ja läheisverkosto')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Perhe ja läheiset</h3>
+                <textarea id="perheLaheiset"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Muu sosiaalinen verkosto</h3>
+                <textarea id="muuVerkosto"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Yksinäisyys / kuormitus</h3>
+                <textarea id="yksinaisyysKuormitus"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Läheisverkoston tuki</h3>
+                <textarea id="laheisverkostonTuki"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section15" class="topic" open>
+            <summary><span class="chevron">▶</span><span>15. Elämänhallinta</span> <span id="trigger-section15" class="info-trigger" onclick="event.preventDefault(); showInfo('section15', '15. Elämänhallinta')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Arjen rytmi ja perustoiminnot</h3>
+                <textarea id="arjenRytmi"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Viranomaisasioiden hoito</h3>
+                <textarea id="viranomaisAsiat"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Digitaidot / asiointikyky</h3>
+                <textarea id="digitaidot"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Motivaatio ja muutoksen valmius</h3>
+                <textarea id="motivaatio"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section16" class="topic" open>
+            <summary><span class="chevron">▶</span><span>16. Kuntoutustarve</span> <span id="trigger-section16" class="info-trigger" onclick="event.preventDefault(); showInfo('section16', '16. Kuntoutustarve')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Sosiaalisen kuntoutuksen tarve</h3>
+                <textarea id="sosiaalinenKuntoutus"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Lääkinnällisen kuntoutuksen tarve</h3>
+                <textarea id="laakinnallinenKuntoutus"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Ammatillisen kuntoutuksen tarve</h3>
+                <textarea id="ammatillinenKuntoutus"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Kuntoutuksen tavoitteet</h3>
+                <textarea id="kuntoutuksenTavoitteet"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section17" class="topic" open>
+            <summary><span class="chevron">▶</span><span>17. Maahanmuutto ja kotoutuminen (tarvittaessa)</span> <span id="trigger-section17" class="info-trigger" onclick="event.preventDefault(); showInfo('section17', '17. Maahanmuutto ja kotoutuminen (tarvittaessa)')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="kotoutumisenVaihe">Kotoutumisen vaihe</label>
+                  <input type="text" id="kotoutumisenVaihe" />
+                </div>
+                <div class="field">
+                  <label for="tulkkaus">Kielitaito / tulkkauksen tarve</label>
+                  <input type="text" id="tulkkaus" />
+                </div>
+                <div class="field full">
+                  <label for="oleskeluKotoutuminen">Oleskeluun / kotoutumiseen liittyvät asiat</label>
+                  <textarea id="oleskeluKotoutuminen"></textarea>
+                </div>
+                <div class="field full">
+                  <label for="kotoutumisenPalvelut">Kotoutumista tukevat palvelut</label>
+                  <textarea id="kotoutumisenPalvelut"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section18" class="topic" open>
+            <summary><span class="chevron">▶</span><span>18. Monialainen palvelutarpeen arvio (TYM)</span> <span id="trigger-section18" class="info-trigger" onclick="event.preventDefault(); showInfo('section18', '18. Monialainen palvelutarpeen arvio (TYM)')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Monialaisuuden peruste</h3>
+                <textarea id="monialaisuudenPeruste"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>TE-palvelujen arvio</h3>
+                <textarea id="teArvio"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Kelan arvio</h3>
+                <textarea id="kelaArvio"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Sosiaali- ja terveyspalvelujen arvio</h3>
+                <textarea id="soteArvio"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Muiden toimijoiden arviot</h3>
+                <textarea id="muutArviot"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Yhteinen tavoite</h3>
+                <textarea id="yhteinenTavoite"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Sovitut vastuut ja jatkotoimet</h3>
+                <textarea id="sovitutVastuut"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Yhteinen johtopäätös</h3>
+                <textarea id="yhteinenJohtopaatos"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section19" class="topic" open>
+            <summary><span class="chevron">▶</span><span>19. Tuen tarpeen luonne</span> <span id="trigger-section19" class="info-trigger" onclick="event.preventDefault(); showInfo('section19', '19. Tuen tarpeen luonne')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="checkbox-group">
+                <label><input type="checkbox" id="luonneTilapainen" /> Tilapäinen</label>
+                <label><input type="checkbox" id="luonneToistuva" /> Toistuva</label>
+                <label><input type="checkbox" id="luonnePitkaaikainen" /> Pitkäaikainen</label>
+              </div>
+              <div class="field" style="margin-top: 12px;">
+                <label for="luonnePerustelu">Perustelu tuen tarpeen luonteelle</label>
+                <textarea id="luonnePerustelu"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section20" class="topic" open>
+            <summary><span class="chevron">▶</span><span>20. Johtopäätökset ja jatkotoimet</span> <span id="trigger-section20" class="info-trigger" onclick="event.preventDefault(); showInfo('section20', '20. Johtopäätökset ja jatkotoimet')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="subsection">
+                <h3>Kokonaisarvio palvelutarpeesta</h3>
+                <textarea id="kokonaisarvioPalvelutarve"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Suositellut palvelut ja tukitoimet</h3>
+                <textarea id="suositellutPalvelut"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Välittömät jatkotoimet</h3>
+                <textarea id="valittomatJatkotoimet"></textarea>
+              </div>
+              <div class="subsection">
+                <h3>Seuranta ja arviointi</h3>
+                <textarea id="seuranta"></textarea>
+              </div>
+            </div>
+          </details>
+
+          <details id="section21" class="topic" open>
+            <summary><span class="chevron">▶</span><span>21. Asiakkuuden jatko ja omatyöntekijä</span> <span id="trigger-section21" class="info-trigger" onclick="event.preventDefault(); showInfo('section21', '21. Asiakkuuden jatko ja omatyöntekijä')">❗️</span></summary>
+            <div class="topic-body">
+              <div class="grid">
+                <div class="field">
+                  <label for="asiakkuudenJatko">Jatkuuko asiakkuus</label>
+                  <select id="asiakkuudenJatko">
+                    <option value=""></option>
+                    <option>Kyllä</option>
+                    <option>Ei</option>
+                    <option>Arvioidaan myöhemmin</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="omatyontekija">Omatyöntekijä</label>
+                  <input type="text" id="omatyontekija" />
+                </div>
+                <div class="field">
+                  <label for="seuraavaYhteydenotto">Seuraava yhteydenotto / tapaaminen</label>
+                  <input type="text" id="seuraavaYhteydenotto" />
+                </div>
+                <div class="field full">
+                  <label for="jatkoVastuut">Sovitut vastuut</label>
+                  <textarea id="jatkoVastuut"></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details id="section22" class="topic" open>
+            <summary><span class="chevron">▶</span><span>22. Päivämäärä ja laatija</span> <span id="trigger-section22" class="info-trigger" onclick="event.preventDefault(); showInfo('section22', '22. Päivämäärä ja laatija')">ℹ️</span></summary>
+            <div class="topic-body">
+              <div class="grid-3">
+                <div class="field">
+                  <label for="laatimisPvm">Päivämäärä</label>
+                  <input type="date" id="laatimisPvm" />
+                </div>
+                <div class="field">
+                  <label for="laatija">Laatija / viranhaltija</label>
+                  <input type="text" id="laatija" />
+                </div>
+                <div class="field">
+                  <label for="tehtavanimike">Tehtävänimike</label>
+                  <input type="text" id="tehtavanimike" />
+                </div>
+                <div class="field full">
+                  <label for="yksikko">Yksikkö / organisaatio</label>
+                  <input type="text" id="yksikko" />
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </form>
+
+      <section class="panel output-card screen-only" style="margin-top: 18px;">
+        <h2>Valmis asiakirjateksti</h2>
+        <p class="muted">Tähän muodostuu vain täytettyjen kohtien asiakirjateksti. Voit kopioida sen suoraan tai tarkistaa alla olevasta Word-tyylisestä esikatselusta.</p>
+        <textarea id="outputText" class="output-box" readonly placeholder="Valmis asiakirjateksti ilmestyy tähän, kun painat 'Päivitä valmis asiakirjateksti'."></textarea>
+      </section>
+
+      <section class="document-card">
+        <div class="document-actions screen-only">
+          <button type="button" class="light" onclick="generateOutput()">Päivitä esikatselu</button>
+          <button type="button" class="success" onclick="copyFinalText()">Kopioi vain valmis asiakirjateksti</button>
+          <button type="button" class="warning" onclick="printDocument()">Tulosta tämä asiakirja</button>
+        </div>
+        <div id="documentPreview" class="document-page">
+          <h1>Työikäisten palvelutarpeen arvio / Monialainen palvelutarpeen arvio</h1>
+          <p class="placeholder">Täytä lomake ja paina “Päivitä valmis asiakirjateksti”. Asiakirjan esikatselu muodostuu tähän Word-tyyliselle sivulle.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="infoModal" class="info-modal-overlay">
+    <div class="info-modal-content">
+      <button class="edit-btn" onclick="enableInfoEdit()" title="Muokkaa ohjetta">✏️</button>
+      <h2 id="infoTitle" style="margin-top: 0; color: #003366;">Ohjeet</h2>
+      <div id="infoDisplayView">
+        <p id="infoText" style="white-space: pre-wrap; line-height: 1.6; color: #1f2937;"></p>
+      </div>
+      <div id="infoEditView" class="hidden">
+        <textarea id="infoEditArea" style="width:100%; min-height:250px; margin-bottom:10px; font-family: inherit; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"></textarea>
+        <button type="button" onclick="saveInfoEdit()" style="padding: 10px 15px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer;">Tallenna muutos</button>
+      </div>
+      <button type="button" style="margin-top:20px; padding: 10px 15px; background: #5c6770; color: white; border: none; border-radius: 6px; cursor: pointer;" onclick="closeInfoModal()">Sulje</button>
+    </div>
+  </div>
+
+  <script>
+    // INFO-SISÄLLÖT JA TOIMINNOT
+    const infoContent = {
+      section1: "❗️ Prosessiohje: TYM-asiakkuus voi alkaa heti työttömyyden alkaessa. Työllisyysasiantuntija tekee kartoituspyynnön Kelaan (Eija Lankinen) ja vie tiedot TYPPI-järjestelmään.",
+      section2: "❗️ Aikataulu: PTA tehdään esim. puhelimitse ENNEN varsinaista TYM-päivää. PTA on lukittava TYPPIssä ennen Moty-suunnitelman aloittamista.",
+      section4: "❗️ TYM-kriteeristö: Asiakkaan on oltava menossa kohti työllistymistä. Arvioi miksi tarvitaan monialaista yhteistyötä (HVA+Kela+Työllisyys) vs. pelkkä konsultaatio.",
+      section5: "❗️ Vaikuttavuus: Älä listaa vain nimiä. Kirjaa missä, milloin, mitä teki ja mikä oli palaute/suositus jatkon kannalta.",
+      section8: "❗️ Tavoitteenasettelu: Kirjaa vahvuudet ja työllistymisen esteet rehellisesti. Osaamisen puutteet ovat keskeinen signaali.",
+      section12: "❗️ Pakollinen toimenpide: Jokainen TYM-asiakas tulee ohjata työttömien terveystarkastukseen!",
+      section16: "❗️ KUTY-vaatimukset: Kirjaa: 1) Tavoite/paikka, 2) Kesto per pv/vko, 3) Alkamisaika/pituus, 4) Tuki/ohjaus, 5) Ohella tarjottava sote-tuki.",
+      section18: "❗️ Kela-rooli: Hyödynnä Kelan työkykyneuvojia, jos sairauspäiväraha-aika täyttyy tai eläkeselvittely on käynnissä.",
+      section20: "❗️ Konkretia: Aseta realistiset tavoitteet seuraavalle 3-6 kuukaudelle. 'Kuka tekee, mitä ja milloin?'",
+      section21: "❗️ Päättäminen: Asiakkuus päätetään verkoston yhteisellä päätöksellä (TYPPI-tiedote). Vältä 'Muu syy' -luokitusta ilman perusteluja."
+    };
+
+    let currentInfoId = "";
+
+    function showInfo(id, titleText) {
+      currentInfoId = id;
+      document.getElementById('infoTitle').textContent = "Ohjeet: " + titleText;
+      document.getElementById('infoText').textContent = infoContent[id] || "Ei asetettua ohjeistusta tälle osiolle. Klikkaa kynää muokataksesi.";
+      document.getElementById('infoDisplayView').classList.remove('hidden');
+      document.getElementById('infoEditView').classList.add('hidden');
+      document.getElementById('infoModal').style.display = 'flex';
+    }
+
+    function enableInfoEdit() {
+      document.getElementById('infoDisplayView').classList.add('hidden');
+      document.getElementById('infoEditView').classList.remove('hidden');
+      document.getElementById('infoEditArea').value = infoContent[currentInfoId] || "";
+    }
+
+    function saveInfoEdit() {
+      const newVal = document.getElementById('infoEditArea').value;
+      infoContent[currentInfoId] = newVal;
+      document.getElementById('infoText').textContent = newVal;
+      document.getElementById('infoDisplayView').classList.remove('hidden');
+      document.getElementById('infoEditView').classList.add('hidden');
+      
+      const trigger = document.getElementById('trigger-' + currentInfoId);
+      if (trigger) trigger.textContent = newVal.trim() !== "" ? "❗️" : "ℹ️";
+    }
+
+    function closeInfoModal() { document.getElementById('infoModal').style.display = 'none'; }
+
+
+    let activeField = null;
+
+    const phraseTemplates = {
+      tyottomyys: [
+        { label: 'Pitkittynyt työttömyys', text: 'Asiakas on ollut työttömänä pidempään ja tarvitsee suunnitelmallista tukea työllistymisen edellytysten vahvistamiseksi.' },
+        { label: 'Työllistymisen esteet', text: 'Työllistymistä vaikeuttavat tällä hetkellä terveydelliset, elämäntilanteeseen liittyvät ja arjen hallintaa kuormittavat tekijät.' },
+        { label: 'Tarve verkostotyölle', text: 'Tilanne edellyttää tiivistä yhteistyötä työllisyyspalvelujen, sosiaalipalvelujen ja tarvittaessa terveydenhuollon kanssa.' },
+        { label: 'Motivaatio olemassa', text: 'Asiakas ilmaisee halua edetä kohti työelämää, mutta tarvitsee vaiheittaista tukea ja realistisia välitavoitteita.' }
+      ],
+      terveys: [
+        { label: 'Terveydentila vaikuttaa arkeen', text: 'Asiakkaan terveydentila vaikuttaa arjen sujumiseen ja toimintakykyyn siten, että se on huomioitava palvelujen suunnittelussa.' },
+        { label: 'Psyykkinen kuormitus', text: 'Asiakkaalla on psyykkistä kuormitusta, joka heikentää jaksamista ja vaikeuttaa asioiden hoitamista itsenäisesti.' },
+        { label: 'Hoitokontaktin tarve', text: 'Tilanne edellyttää terveydenhuollon arviota ja tarvittaessa hoitokontaktin tai jatkoselvitysten järjestämistä.' },
+        { label: 'Toimintakyky vaihtelee', text: 'Toimintakyky vaihtelee, mikä on huomioitava palveluprosessin etenemisessä ja tavoitteiden asettamisessa.' }
+      ],
+      kuntoutustarve: [
+        { label: 'Sosiaalinen kuntoutus', text: 'Asiakkaalla on tarvetta sosiaaliselle kuntoutukselle arjen hallinnan, osallisuuden ja toimintakyvyn vahvistamiseksi.' },
+        { label: 'Ammatillinen kuntoutus', text: 'Ammatillisen kuntoutuksen mahdollisuudet on syytä arvioida työ- ja toimintakyvyn sekä työllistymisvalmiuksien näkökulmasta.' },
+        { label: 'Moniammatillinen tuki', text: 'Kuntoutuksen suunnittelu edellyttää moniammatillista yhteistyötä, jotta palvelut muodostavat asiakkaalle tarkoituksenmukaisen kokonaisuuden.' },
+        { label: 'Tavoitteellinen eteneminen', text: 'Kuntoutuksen tavoitteena on vahvistaa asiakkaan toimintakykyä, lisätä arjen vakautta ja tukea etenemistä kohti opintoja tai työelämää.' }
+      ],
+      talous: [
+        { label: 'Taloudellinen kuormitus', text: 'Asiakkaan taloudellinen tilanne on kuormittunut, mikä lisää arjen epävarmuutta ja vaikeuttaa muiden tavoitteiden edistämistä.' },
+        { label: 'Velkatilanne', text: 'Velkatilanne tai maksamattomat laskut heikentävät kokonaistilannetta ja edellyttävät talousasioiden jäsentämistä.' },
+        { label: 'Tarve talousohjaukselle', text: 'Asiakas hyötyisi talousneuvonnasta ja tuesta etuuksiin, velkoihin tai menojen hallintaan liittyvissä asioissa.' }
+      ],
+      asuminen: [
+        { label: 'Asumisen epävarmuus', text: 'Asumiseen liittyy epävarmuustekijöitä, jotka heijastuvat asiakkaan turvallisuuden tunteeseen ja toimintakykyyn.' },
+        { label: 'Tarve asumisen tuelle', text: 'Asiakas tarvitsee tukea asumisen pysyvyyden turvaamisessa ja asumiseen liittyvien asioiden hoitamisessa.' },
+        { label: 'Asumisen tilanne vakautettava', text: 'Asumisen tilanteen vakauttaminen on keskeinen edellytys muun palvelusuunnitelman etenemiselle.' }
+      ]
+    };
+
+    const sectionDefinitions = [
+      { id: 'section1', title: '1. Asian vireilletuloa koskevat tiedot', fields: [
+        { label: 'Vireilletulon tapa', id: 'vireilletulonTapa' },
+        { label: 'Vireilletulopäivä', id: 'vireilletuloPvm' },
+        { label: 'Vireilletulon syy / syyt', id: 'vireilletulonSyy' },
+        { label: 'Yhteydenottaja / ilmoittaja', id: 'yhteydenottaja' }
+      ]},
+      { id: 'section2', title: '2. Palvelutarpeen arviointia koskevat tiedot', fields: [
+        { label: 'Arvioinnin aloittamispäivä', id: 'aloitusPvm' },
+        { label: 'Arvioinnin toteutustapa', id: 'arvioinninTapa' },
+        { label: 'Kuvaus arvioinnin toteuttamisesta', id: 'arvioinninToteutus' },
+        { label: 'Arviointiin osallistuneet henkilöt ja tahot', id: 'osallistujat' },
+        { label: 'Arvioinnissa hyödynnetyt asiakirjat / selvitykset', id: 'asiakirjat' }
+      ]},
+      { id: 'section3', title: '3. Asiakkaan ja läheisten näkemys', fields: [
+        { label: 'Asiakkaan oma arvio tilanteestaan ja tuen tarpeestaan', id: 'asiakkaanNakemys' },
+        { label: 'Asiakkaan omat tavoitteet', id: 'asiakkaanTavoitteet' },
+        { label: 'Läheisten näkemys (tarvittaessa)', id: 'laheistenNakemys' }
+      ]},
+      { id: 'section4', title: '4. Ammattilaisen arvio tilanteesta', fields: [
+        { label: 'Ammattilaisen kokonaisarvio tilanteesta', id: 'kokonaisTilanne' },
+        { label: 'Keskeiset haasteet', id: 'haasteet' },
+        { label: 'Keskeiset voimavarat', id: 'voimavarat' }
+      ]},
+      { id: 'section5', title: '5. Aikaisemmat ja nykyiset palvelut', fields: [
+        { label: 'Sosiaalipalvelut', id: 'palvelutSosiaali' },
+        { label: 'Terveyspalvelut', id: 'palvelutTerveys' },
+        { label: 'Työllisyys- / TE-palvelut', id: 'palvelutTe' },
+        { label: 'Muut palvelut ja verkostot', id: 'palvelutMuut' }
+      ]},
+      { id: 'section6', title: '6. Aikaisemmat toimenpiteet ja niiden vaikuttavuus', fields: [
+        { label: 'Mitä toimenpiteitä on tehty', id: 'toimenpiteetTehty' },
+        { label: 'Arvio vaikuttavuudesta', id: 'toimenpiteetVaikutus' },
+        { label: 'Mikä on auttanut / mikä ei ole auttanut', id: 'toimenpiteetOpit' }
+      ]},
+      { id: 'section7', title: '7. Asiakkaan omat toimet tuen tarpeen ratkaisemiseksi', fields: [
+        { label: 'Mitä asiakas on itse tehnyt', id: 'omatToimet' },
+        { label: 'Mikä on onnistunut', id: 'omatToimetOnnistunut' },
+        { label: 'Millaista lisätukea asiakas tarvitsee', id: 'omatToimetTuki' }
+      ]},
+      { id: 'section8', title: '8. Työelämä', fields: [
+        { label: 'Nykyinen työtilanne', id: 'tyotilanne' },
+        { label: 'Työttömyyden kesto / työmarkkina-asema', id: 'tyottomyydenKesto' },
+        { label: 'Työhistoria', id: 'tyohistoria' },
+        { label: 'Työkyky / työ- ja toimintakyky suhteessa työhön', id: 'tyokyky' },
+        { label: 'Työllistymisen esteet ja mahdollisuudet', id: 'tyollistymisenEsteet' }
+      ]},
+      { id: 'section9', title: '9. Koulutus ja osaaminen', fields: [
+        { label: 'Korkein koulutus', id: 'korkeinKoulutus' },
+        { label: 'Ammatillinen osaaminen / vahvuudet', id: 'ammattiala' },
+        { label: 'Käynnissä olevat tai keskeytyneet opinnot', id: 'opinnot' },
+        { label: 'Lisä- / täydennyskoulutuksen tarve', id: 'koulutusTarve' }
+      ]},
+      { id: 'section10', title: '10. Taloudellinen tilanne', fields: [
+        { label: 'Tulot ja etuudet', id: 'tulot' },
+        { label: 'Menot / velat', id: 'menotVelat' },
+        { label: 'Taloudelliset haasteet', id: 'talousHaasteet' },
+        { label: 'Talousasioiden hoito / edunvalvonnan tarve', id: 'talousHallinta' }
+      ]},
+      { id: 'section11', title: '11. Asuminen', fields: [
+        { label: 'Asumismuoto', id: 'asumismuoto' },
+        { label: 'Asumisen pysyvyys / turvallisuus', id: 'asumisenTurvallisuus' },
+        { label: 'Asumisen tuen tarve', id: 'asumisenTuki' },
+        { label: 'Asumiseen liittyvät riskit / haasteet', id: 'asumisenRiskit' }
+      ]},
+      { id: 'section12', title: '12. Terveydentila ja toimintakyky', fields: [
+        { label: 'Fyysinen terveydentila', id: 'fyysinenTerveys' },
+        { label: 'Psyykkinen vointi', id: 'psyykkinenVointi' },
+        { label: 'Diagnoosit, lääkitys ja hoitokontaktit', id: 'diagnoositLaakitys' },
+        { label: 'Toimintakyky arjessa', id: 'toimintakykyArki' }
+      ]},
+      { id: 'section13', title: '13. Päihteiden käyttö ja riippuvuudet', fields: [
+        { label: 'Päihteiden käyttö', id: 'paihteidenKaytto' },
+        { label: 'Riippuvuudet', id: 'riippuvuudet' },
+        { label: 'Vaikutus arkeen, terveyteen ja työkykyyn', id: 'paihteetVaikutus' },
+        { label: 'Hoidon / tuen tarve', id: 'paihteetTuki' }
+      ]},
+      { id: 'section14', title: '14. Sosiaaliset suhteet ja läheisverkosto', fields: [
+        { label: 'Perhe ja läheiset', id: 'perheLaheiset' },
+        { label: 'Muu sosiaalinen verkosto', id: 'muuVerkosto' },
+        { label: 'Yksinäisyys / kuormitus', id: 'yksinaisyysKuormitus' },
+        { label: 'Läheisverkoston tuki', id: 'laheisverkostonTuki' }
+      ]},
+      { id: 'section15', title: '15. Elämänhallinta', fields: [
+        { label: 'Arjen rytmi ja perustoiminnot', id: 'arjenRytmi' },
+        { label: 'Viranomaisasioiden hoito', id: 'viranomaisAsiat' },
+        { label: 'Digitaidot / asiointikyky', id: 'digitaidot' },
+        { label: 'Motivaatio ja muutoksen valmius', id: 'motivaatio' }
+      ]},
+      { id: 'section16', title: '16. Kuntoutustarve', fields: [
+        { label: 'Sosiaalisen kuntoutuksen tarve', id: 'sosiaalinenKuntoutus' },
+        { label: 'Lääkinnällisen kuntoutuksen tarve', id: 'laakinnallinenKuntoutus' },
+        { label: 'Ammatillisen kuntoutuksen tarve', id: 'ammatillinenKuntoutus' },
+        { label: 'Kuntoutuksen tavoitteet', id: 'kuntoutuksenTavoitteet' }
+      ]},
+      { id: 'section17', title: '17. Maahanmuutto ja kotoutuminen (tarvittaessa)', fields: [
+        { label: 'Kotoutumisen vaihe', id: 'kotoutumisenVaihe' },
+        { label: 'Kielitaito / tulkkauksen tarve', id: 'tulkkaus' },
+        { label: 'Oleskeluun / kotoutumiseen liittyvät asiat', id: 'oleskeluKotoutuminen' },
+        { label: 'Kotoutumista tukevat palvelut', id: 'kotoutumisenPalvelut' }
+      ]},
+      { id: 'section18', title: '18. Monialainen palvelutarpeen arvio (TYM)', tymOnly: true, fields: [
+        { label: 'Monialaisuuden peruste', id: 'monialaisuudenPeruste' },
+        { label: 'TE-palvelujen arvio', id: 'teArvio' },
+        { label: 'Kelan arvio', id: 'kelaArvio' },
+        { label: 'Sosiaali- ja terveyspalvelujen arvio', id: 'soteArvio' },
+        { label: 'Muiden toimijoiden arviot', id: 'muutArviot' },
+        { label: 'Yhteinen tavoite', id: 'yhteinenTavoite' },
+        { label: 'Sovitut vastuut ja jatkotoimet', id: 'sovitutVastuut' },
+        { label: 'Yhteinen johtopäätös', id: 'yhteinenJohtopaatos' }
+      ]},
+      { id: 'section19', title: '19. Tuen tarpeen luonne', fields: [
+        { label: 'Tuen tarpeen luonne', getter: function() { return checkedValues().join(', '); } },
+        { label: 'Perustelu tuen tarpeen luonteelle', id: 'luonnePerustelu' }
+      ]},
+      { id: 'section20', title: '20. Johtopäätökset ja jatkotoimet', fields: [
+        { label: 'Kokonaisarvio palvelutarpeesta', id: 'kokonaisarvioPalvelutarve' },
+        { label: 'Suositellut palvelut ja tukitoimet', id: 'suositellutPalvelut' },
+        { label: 'Välittömät jatkotoimet', id: 'valittomatJatkotoimet' },
+        { label: 'Seuranta ja arviointi', id: 'seuranta' }
+      ]},
+      { id: 'section21', title: '21. Asiakkuuden jatko ja omatyöntekijä', fields: [
+        { label: 'Jatkuuko asiakkuus', id: 'asiakkuudenJatko' },
+        { label: 'Omatyöntekijä', id: 'omatyontekija' },
+        { label: 'Seuraava yhteydenotto / tapaaminen', id: 'seuraavaYhteydenotto' },
+        { label: 'Sovitut vastuut', id: 'jatkoVastuut' }
+      ]},
+      { id: 'section22', title: '22. Päivämäärä ja laatija', fields: [
+        { label: 'Päivämäärä', id: 'laatimisPvm' },
+        { label: 'Laatija / viranhaltija', id: 'laatija' },
+        { label: 'Tehtävänimike', id: 'tehtavanimike' },
+        { label: 'Yksikkö / organisaatio', id: 'yksikko' }
+      ]}
+    ];
+
+    function escapeHtml(value) {
+      return (value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getValue(id) {
+      const el = document.getElementById(id);
+      if (!el) return '';
+      if (el.type === 'checkbox') return el.checked ? 'Kyllä' : '';
+      return (el.value || '').trim();
+    }
+
+    function getFieldValue(field) {
+      if (typeof field.getter === 'function') {
+        return (field.getter() || '').trim();
+      }
+      return getValue(field.id);
+    }
+
+    function checkedValues() {
+      const values = [];
+      if (document.getElementById('luonneTilapainen').checked) values.push('Tilapäinen');
+      if (document.getElementById('luonneToistuva').checked) values.push('Toistuva');
+      if (document.getElementById('luonnePitkaaikainen').checked) values.push('Pitkäaikainen');
+      return values;
+    }
+
+    function autosizeTextarea(el) {
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = Math.max(el.scrollHeight, 70) + 'px';
+    }
+
+    function setActiveField(el) {
+      activeField = el;
+      const labelText = el && el.id ? (document.querySelector('label[for="' + el.id + '"]')?.innerText || el.id) : 'ei valittuna';
+      document.getElementById('activeFieldName').textContent = labelText;
+    }
+
+    function renderPhraseButtons() {
+      const category = document.getElementById('phraseCategory').value;
+      const container = document.getElementById('phraseButtons');
+      container.innerHTML = '';
+      (phraseTemplates[category] || []).forEach(function(item) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.innerHTML = '<strong>' + escapeHtml(item.label) + '</strong><br>' + escapeHtml(item.text);
+        btn.addEventListener('click', function() {
+          insertPhrase(item.text);
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function insertPhrase(text) {
+      if (!activeField || activeField.readOnly) {
+        alert('Klikkaa ensin kenttää, johon haluat lisätä fraasipohjan.');
+        return;
+      }
+      const current = activeField.value || '';
+      const start = typeof activeField.selectionStart === 'number' ? activeField.selectionStart : current.length;
+      const end = typeof activeField.selectionEnd === 'number' ? activeField.selectionEnd : current.length;
+      const before = current.slice(0, start);
+      const after = current.slice(end);
+      const prefix = before && !before.endsWith('\n') ? '\n' : '';
+      const suffix = after && !after.startsWith('\n') ? '\n' : '';
+      const insertText = prefix + text + suffix;
+      activeField.value = before + insertText + after;
+      activeField.focus();
+      if (typeof activeField.selectionStart === 'number') {
+        const pos = before.length + insertText.length;
+        activeField.setSelectionRange(pos, pos);
+      }
+      if (activeField.tagName === 'TEXTAREA') autosizeTextarea(activeField);
+      updateFilledView();
+    }
+
+    function isSectionVisibleByRule(def) {
+      if (def.tymOnly && !document.getElementById('tymToggle').checked) return false;
+      return true;
+    }
+
+    function isSectionFilled(def) {
+      return def.fields.some(function(field) {
+        return getFieldValue(field) !== '';
+      });
+    }
+
+    function updateFilledView() {
+      const showOnlyFilled = document.getElementById('filledOnlyToggle').checked;
+      sectionDefinitions.forEach(function(def) {
+        const sectionEl = document.getElementById(def.id);
+        const tocLink = document.querySelector('[data-toc="' + def.id + '"]');
+        const visibleByRule = isSectionVisibleByRule(def);
+        const filled = isSectionFilled(def);
+        const shouldShow = visibleByRule && (!showOnlyFilled || filled);
+        sectionEl.classList.toggle('hidden-section', !shouldShow);
+        if (tocLink) tocLink.classList.toggle('hidden-section', !shouldShow);
+      });
+      highlightCurrentToc();
+    }
+
+    function openSection(id) {
+      const section = document.getElementById(id);
+      if (!section) return;
+      section.open = true;
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      highlightCurrentToc(id);
+    }
+
+    function openAllSections() {
+      document.querySelectorAll('details.topic').forEach(function(section) {
+        if (!section.classList.contains('hidden-section')) section.open = true;
+      });
+    }
+
+    function closeAllSections() {
+      document.querySelectorAll('details.topic').forEach(function(section) {
+        if (!section.classList.contains('hidden-section')) section.open = false;
+      });
+    }
+
+    function highlightCurrentToc(forcedId) {
+      const links = document.querySelectorAll('.toc-link');
+      links.forEach(function(link) { link.classList.remove('active'); });
+      const targetId = forcedId || getCurrentSectionId();
+      if (!targetId) return;
+      const activeLink = document.querySelector('.toc-link[data-toc="' + targetId + '"]');
+      if (activeLink && !activeLink.classList.contains('hidden-section')) {
+        activeLink.classList.add('active');
+      }
+    }
+
+    function getCurrentSectionId() {
+      const visibleSections = Array.from(document.querySelectorAll('details.topic')).filter(function(section) {
+        return !section.classList.contains('hidden-section');
+      });
+      let current = visibleSections[0]?.id || '';
+      visibleSections.forEach(function(section) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= 140) current = section.id;
+      });
+      return current;
+    }
+
+    function buildSectionLines(def) {
+      const lines = [];
+      def.fields.forEach(function(field) {
+        const value = getFieldValue(field);
+        if (!value) return;
+        lines.push(field.label + ': ' + value);
+      });
+      return lines;
+    }
+
+    function generateOutput() {
+      const outputParts = [];
+      const previewParts = [];
+
+      outputParts.push('TYÖIKÄISTEN PALVELUTARPEEN ARVIO / MONIALAINEN PALVELUTARPEEN ARVIO');
+      outputParts.push('');
+
+      previewParts.push('<h1>Työikäisten palvelutarpeen arvio / Monialainen palvelutarpeen arvio</h1>');
+
+      sectionDefinitions.forEach(function(def) {
+        if (!isSectionVisibleByRule(def)) return;
+        const lines = buildSectionLines(def);
+        if (!lines.length) return;
+
+        outputParts.push(def.title);
+        outputParts.push(lines.join('\n'));
+        outputParts.push('');
+
+        previewParts.push('<h2>' + escapeHtml(def.title) + '</h2>');
+        lines.forEach(function(line) {
+          previewParts.push('<p>' + escapeHtml(line) + '</p>');
+        });
+      });
+
+      const outputText = outputParts.join('\n').trim();
+      document.getElementById('outputText').value = outputText;
+      autosizeTextarea(document.getElementById('outputText'));
+
+      const preview = document.getElementById('documentPreview');
+      if (previewParts.length === 1) {
+        preview.innerHTML = '<h1>Työikäisten palvelutarpeen arvio / Monialainen palvelutarpeen arvio</h1><p class="placeholder">Täytä lomake ja paina “Päivitä valmis asiakirjateksti”. Asiakirjan esikatselu muodostuu tähän Word-tyyliselle sivulle.</p>';
+      } else {
+        preview.innerHTML = previewParts.join('');
+      }
+    }
+
+    async function copyFinalText() {
+      generateOutput();
+      const text = document.getElementById('outputText').value;
+      if (!text) {
+        alert('Asiakirjateksti on vielä tyhjä. Täytä vähintään yksi kenttä.');
+        return;
+      }
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const output = document.getElementById('outputText');
+          output.select();
+          output.setSelectionRange(0, 999999);
+          document.execCommand('copy');
+        }
+        alert('Valmis asiakirjateksti kopioitu leikepöydälle.');
+      } catch (err) {
+        alert('Automaattinen kopiointi ei onnistunut. Voit silti kopioida tekstin käsin valmis asiakirjateksti -kentästä.');
+      }
+    }
+
+    function clearForm() {
+      const ok = confirm('Tyhjennetäänkö koko lomake?');
+      if (!ok) return;
+      document.getElementById('ptaForm').reset();
+      document.getElementById('outputText').value = '';
+      document.getElementById('documentPreview').innerHTML = '<h1>Työikäisten palvelutarpeen arvio / Monialainen palvelutarpeen arvio</h1><p class="placeholder">Täytä lomake ja paina “Päivitä valmis asiakirjateksti”. Asiakirjan esikatselu muodostuu tähän Word-tyyliselle sivulle.</p>';
+      document.querySelectorAll('textarea').forEach(function(el) { autosizeTextarea(el); });
+      document.querySelectorAll('details.topic').forEach(function(section) { section.open = true; });
+      document.getElementById('filledOnlyToggle').checked = false;
+      toggleTYM();
+      updateFilledView();
+      document.getElementById('activeFieldName').textContent = 'ei valittuna';
+      activeField = null;
+    }
+
+    function toggleTYM() {
+      const tymSection = document.getElementById('section18');
+      const tocLink = document.querySelector('[data-toc="section18"]');
+      const checked = document.getElementById('tymToggle').checked;
+      if (!checked) {
+        tymSection.open = false;
+      }
+      if (tocLink) {
+        tocLink.classList.toggle('hidden-section', !checked && document.getElementById('filledOnlyToggle').checked === false ? false : false);
+      }
+      updateFilledView();
+    }
+
+    function printDocument() {
+      generateOutput();
+      setTimeout(function() {
+        window.print();
+      }, 80);
+    }
+
+    document.addEventListener('scroll', function() {
+      highlightCurrentToc();
+    }, { passive: true });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      renderPhraseButtons();
+      document.querySelectorAll('textarea').forEach(function(el) {
+        autosizeTextarea(el);
+        el.addEventListener('input', function() {
+          autosizeTextarea(el);
+          if (document.getElementById('filledOnlyToggle').checked) updateFilledView();
+        });
+        el.addEventListener('focus', function() { setActiveField(el); });
+      });
+      document.querySelectorAll('input[type="text"], input[type="date"], select').forEach(function(el) {
+        el.addEventListener('focus', function() { setActiveField(el); });
+        el.addEventListener('input', function() {
+          if (document.getElementById('filledOnlyToggle').checked) updateFilledView();
+        });
+        el.addEventListener('change', function() {
+          if (document.getElementById('filledOnlyToggle').checked) updateFilledView();
+        });
+      });
+      document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+        el.addEventListener('change', function() {
+          if (document.getElementById('filledOnlyToggle').checked) updateFilledView();
+        });
+      });
+      toggleTYM();
+      updateFilledView();
+      generateOutput();
+      highlightCurrentToc('section1');
+    });
+  </script>
+</body>
+</html>
