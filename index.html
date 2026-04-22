@@ -449,6 +449,12 @@
         <div id="phraseButtons" class="phrase-buttons"></div>
         <div class="active-field">Aktiivinen kenttä: <span id="activeFieldName">ei valittuna</span></div>
       </section>
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+    <span>Pikalinkit ja ohjeet</span>
+    <i class="bi bi-link-45deg"></i>
+</h6>
+<ul class="nav flex-column" id="externalLinksList">
+    </ul>
     </aside>
 
     <main class="main">
@@ -1572,5 +1578,35 @@
       highlightCurrentToc('section1');
     });
   </script>
+  <script>
+    // TÄSTÄ ON HELPPO PÄIVITTÄÄ LINKKEJÄ:
+    // Lisää vain uusi rivi muodossa: { otsikko: "Nimi", url: "osoite" },
+    const linkkiLista = [
+        { otsikko: "TYPPI-ohjekirja 2025", url: "https://esimerkki.fi/ohjekirja" },
+        { otsikko: "TYM-laki (Finlex)", url: "https://www.finlex.fi/fi/laki/alkup/2023/20230381" },
+        { otsikko: "Kelan ohjeet työntekijälle", url: "https://www.kela.fi" },
+        { otsikko: "Työmarkkinatori", url: "https://tyomarkkinatori.fi" }
+    ];
+
+    function paivitaPikalinkit() {
+        const listanRunko = document.getElementById('externalLinksList');
+        if (!listanRunko) return;
+
+        listanRunko.innerHTML = linkkiLista.map(linkki => `
+            <li class="nav-item">
+                <a class="nav-link text-secondary py-1 small d-flex align-items-center" 
+                   href="${linkki.url}" 
+                   target="_blank" 
+                   rel="noopener noreferrer">
+                    <i class="bi bi-box-arrow-up-right me-2" style="font-size: 0.8rem;"></i>
+                    <span>${linkki.otsikko}</span>
+                </a>
+            </li>
+        `).join('');
+    }
+
+    // Ajetaan funktio sivun latautuessa
+    document.addEventListener('DOMContentLoaded', paivitaPikalinkit);
+</script>
 </body>
 </html>
